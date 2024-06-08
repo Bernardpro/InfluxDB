@@ -8,20 +8,22 @@ from dotenv import load_dotenv
 import os
 load_dotenv()
 
-def init_connection():
-    connection_string = rf"DRIVER=SQL Server;SERVER=.\SQLEXPRESS;DATABASE=Cave;Trusted_Connection=yes;"
+def init_connection(sql_connexion):
+    connection_string = rf"{sql_connexion}"
     connection_url = URL.create("mssql+pyodbc", query={"odbc_connect": connection_string})
     engine = create_engine(connection_url, fast_executemany=True)
     return engine
 
 # Initialiser la connexion à SQL Server
-engine = init_connection()
+sql_connexion = os.environ['SQL_CONNEXION']
+engine = init_connection(sql_connexion)
 
 # Configuration de la connexion InfluxDB
 bucket: str = os.environ['BUCKET_INFLUX']
 org: str = os.environ['ORG_INFLUX']
 token: str = os.environ['TOKEN_INFLUX']
 url:str = os.environ['URL_INFLUX']
+
 print(bucket,org, token,url)
 client = InfluxDBClient(url=url, token=token, org=org)
 
