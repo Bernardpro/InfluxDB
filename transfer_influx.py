@@ -6,6 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.sql import text
 from dotenv import load_dotenv
 import os
+
 load_dotenv()
 
 def init_connection(sql_connexion):
@@ -14,51 +15,47 @@ def init_connection(sql_connexion):
     engine = create_engine(connection_url, fast_executemany=True)
     return engine
 
-# Initialiser la connexion à SQL Server
+# Initialize the connection to SQL Server
 sql_connexion = os.environ['SQL_CONNEXION']
 engine = init_connection(sql_connexion)
 
-# Configuration de la connexion InfluxDB
+# Configuration for InfluxDB connection
 bucket: str = os.environ['BUCKET_INFLUX']
 org: str = os.environ['ORG_INFLUX']
 token: str = os.environ['TOKEN_INFLUX']
 url:str = os.environ['URL_INFLUX']
 
-print(bucket,org, token,url)
+print(bucket, org, token, url)
 client = InfluxDBClient(url=url, token=token, org=org)
 
-# Fonction pour écrire des points de données dans InfluxDB
+# Function to write data points to InfluxDB
 def write_temperature_data(row: list):
-    # Création d'un point de données
-
-    for index, col in enumerate(columns[1:],1):
+    # Create a data point
+    for index, col in enumerate(columns[1:], 1):
         point = Point("_historique") \
             .tag("information", "testing") \
             .field(col, row[index]) \
             .time(row[0], WritePrecision.NS)
         
-        # Écriture du point dans InfluxDB
+        # Write the point to InfluxDB
         write_api = client.write_api(write_options=SYNCHRONOUS)
         write_api.write(bucket=bucket, org=org, record=point)
 
 data_query = text("SELECT * FROM Cave.dbo.historique")
 colums_query = text("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'historique'")
 
-try : 
+try: 
     with engine.connect() as connection:
         columns_result = connection.execute(colums_query)
         columns = [row.COLUMN_NAME for row in columns_result]
         print("columns", columns)
     
-        
-        
         result = connection.execute(data_query)
         
-
-        for i,row in enumerate(result):
-            if (i==0):
+        for i, row in enumerate(result):
+            if (i == 0):
                 start_date = row[0]
-            elif (i==len(columns)-1) :
+            elif (i == len(columns) - 1):
                 end_date = row[0]
             write_temperature_data(row)
 
@@ -79,5 +76,5 @@ except Exception as e:
     print("Error", e)
 
 finally:
-    # Fermeture du client
+    # Close the client
     client.close()
