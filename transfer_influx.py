@@ -65,7 +65,7 @@ try :
     from(bucket: "testBucket")
       |> range(start: 0)
       |> filter(fn: (r) => r._measurement == "_historique")
-      |> filter(fn: (r) => r.location == "scada")
+      |> filter(fn: (r) => r.information == "testing")
     '''
     tables = query_api.query(query, org=org)
 
